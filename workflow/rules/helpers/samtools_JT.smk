@@ -131,11 +131,4 @@ rule helpers__samtools__flagstats_cram:
     resources:
         time =  config["resources"]["time"]["shortrun"]
     shell:
-        """
-        if [ ! -s {input.cram} ]; then
-            echo "[INFO] CRAM file '{input.cram}' is empty or missing. Skipping samtools flagstats." >> {log}
-            touch {output.txt}
-            exit 0
-        fi
-        samtools flagstats {input.cram} > {output.txt} 2> {log}
-        """
+        "samtools flagstats {input.cram} > {output.txt} 2> {log}"

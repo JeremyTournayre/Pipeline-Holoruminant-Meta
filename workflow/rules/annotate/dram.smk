@@ -29,6 +29,15 @@ rule annotate__dram__annotate:
         partition = config["resources"]["partition"]["longrun"]
     shell:
         """
+
+        if [ ! -s {input.dereplicated_genomes} ]; then
+            mkdir -p {params.out_dir}
+            echo "[INFO] DREP dereplicated_genomes file '{input.dereplicated_genomes}' is empty or missing. Skipping DRAM." >> {log}
+            touch {output.annotation}
+            touch {output.trnas}
+            touch {output.rrnas}
+            exit 0
+        fi
         rm -rf {params.tmp_dir}
         
         echo "Hostname: $(hostname)" 2>> {log} 1>&2
@@ -71,6 +80,15 @@ rule annotate__dram__distill:
         outdir=DRAM,
     shell:
         """
+        if [ ! -s {input.annotations} ]; then
+            mkdir -p {params.outdir_tmp}
+            echo "[INFO] DRAM annotations file '{input.annotations}' is empty or missing. Skipping DRAM." >> {log}
+            touch {output.genome}
+            touch {output.metabolism}
+            touch {output.product_html}
+            touch {output.product_tsv}
+            exit 0
+        fi
         DRAM.py distill \
             --config_loc {params.config} \
             --input_file {input.annotations} \

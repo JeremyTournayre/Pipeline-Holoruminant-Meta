@@ -49,7 +49,7 @@ rule _preprocess__bowtie2__map:
         reference=HOSTS / "{genome}.fa.gz",
         faidx=HOSTS / "{genome}.fa.gz.fai",
     output:
-        cram=PRE_BOWTIE2 / "{genome}" / "{sample_id}.{library_id}.cram",
+        cram=temp(PRE_BOWTIE2 / "{genome}" / "{sample_id}.{library_id}.cram"),
         counts= PRE_QUANT / "{genome}" / "{sample_id}.{library_id}.chr_alignment_counts.tsv"
     log:
         PRE_BOWTIE2 / "{genome}" / "{sample_id}.{library_id}.log",
@@ -132,6 +132,7 @@ rule _preprocess__bowtie2__extract_nonhost:
         nvme = config["resources"]["nvme"]["large"]
     shell:
         """
+        mkdir -p {params.temp}
         ( samtools view \
             --reference {input.reference} \
             --threads {threads} \
@@ -142,8 +143,7 @@ rule _preprocess__bowtie2__extract_nonhost:
         | samtools collate \
             -O \
             -u \
-            -f \
-            -T {input.cram}_prefix \
+            -f {params.temp} \
             --reference {input.reference} \
             -@ {threads} \
             - \

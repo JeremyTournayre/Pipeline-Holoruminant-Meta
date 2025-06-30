@@ -16,7 +16,7 @@ rule _assemble__drep__separate_bins:
         """
         mkdir --parents {output.out_dir} 2> {log} 1>&2
 
-        # Check if files exist and are not empty before processing
+       # Check if files exist and are not empty before processing
         for assembly in {input.assemblies}; do
             if [ -s "$assembly" ]; then
                 # Process the assembly if it's not empty
@@ -106,13 +106,13 @@ rule _assemble__drep__run:
             for file in $files; do
                 gzip "$file"
             done
-            mv {log}.{resources.attempt} {log}
         else
             echo "No .fa files in {input.genomes}, skipping dRep" >> {log}
             mkdir -p {output.dereplicated_genomes}
             touch {output.data}
             touch {output.data_tables}
         fi
+        mv {log}.{resources.attempt} {log}
         """
 
 

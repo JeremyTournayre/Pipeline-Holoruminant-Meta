@@ -23,13 +23,6 @@ rule annotate__bakta:
         partition = config["resources"]["partition"]["longrun"]
     shell:
         """
-        if [ ! -s {input.contigs} ]; then
-            mkdir -p {params.out_dir}
-            echo "[INFO] DREP dereplicated_genomes file '{input.contigs}' is empty or missing. Skipping bakta." >> {log}
-            touch {output.tsv}
-            touch {output.faa}
-            exit 0
-        fi
         bakta --db {params.db} \
               --force \
               --verbose \
@@ -66,12 +59,6 @@ rule annotate__bakta_mags_run:
         partition = config["resources"]["partition"]["small"]
     shell:
         """
-        if [ ! -s {input.contigs} ]; then
-            echo "[INFO] contigs file '{input.contigs}' is empty or missing. Skipping bakta." >> {log}
-            touch {output.tsv}
-            touch {output.faa}
-            exit 0
-        fi
         bakta --db {params.db} \
               --force \
               --verbose \

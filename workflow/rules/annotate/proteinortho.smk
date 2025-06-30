@@ -15,6 +15,13 @@ rule annotate__proteinortho:
         time =  config["resources"]["time"]["longrun"]
     shell:
         """
+        for f in {input.faa}; do
+            if [ ! -s "$f" ]; then
+                echo "[WARNING] File '$f' is empty or missing. Skipping proteinortho." >> {log}
+                touch {output.project}
+                exit 0
+            fi
+        done
         proteinortho {input.faa} \
             -cpus={threads} \
             -project={output.project} \

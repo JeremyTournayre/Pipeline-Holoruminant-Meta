@@ -32,7 +32,7 @@ rule contig_annotate__eggnog_find_homology:
         fi;
 
 
-         emapper.py -m diamond --override --data_dir $DATA_DIR --no_annot --no_file_comments --cpu {threads} -i {input.files} --output_dir {params.folder} -o {params.out}  2>> {log} 1>&2;
+         emapper.py -m diamond --data_dir $DATA_DIR --no_annot --no_file_comments --cpu {threads} -i {input.files} --output_dir {params.folder} -o {params.out}  2>> {log} 1>&2;
     """
     
                   

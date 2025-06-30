@@ -184,6 +184,7 @@ rule _assemble__magscot__merge_contig_to_bin:
         done >> {output} 2>> {log}
         """
 
+# The refined are commented out for testing runs, when there are too few contigs, the refinement
 rule _assemble__magscot__run:
     """Run MAGSCOT over one assembly"""
     input:
@@ -224,7 +225,7 @@ rule _assemble__magscot__run:
          2> {log} 1>&2 || echo "No result but proceeding."
          }}
         touch {output.ar53} {output.bac120} {output.refined_contig_to_bin} {output.refined_out} {output.scores};
-         
+        
         echo $? >> {log}
         
         """
@@ -289,10 +290,10 @@ rule _assemble__magscot__rename:
         """
         if [ -s {input.clean} ]; then
             python {params.script_folder}/reformat_fasta_magscot.py \
-            <(gzip -dc {input.assembly}) \
-            {input.clean} \
-        | pigz \
-            --best \
+                <(gzip -dc {input.assembly}) \
+                {input.clean} \
+            | pigz \
+                --best \
             > {output.fasta} 2>> {log}  # Ajoute les erreurs au log
         else
             echo "No data found, skipping renaming step." > {log}

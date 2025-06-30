@@ -21,19 +21,26 @@ rule annotate__checkm2__predict:
         nvme = config["resources"]["nvme"]["large"],
     shell:
         """
-        rm -rfv {params.out_dir} 2> {log} 1>&2
+        if compgen -G "{input.mags}/*.fa" > /dev/null; then
+            rm -rfv {params.out_dir} 2> {log} 1>&2
 
-        checkm2 predict \
-            --threads {threads} \
-            --input {input.mags} \
-            --extension .fa.gz \
-            --output-directory {params.out_dir} \
-            --database_path {input.db} \
-            --remove_intermediates \
-        2>> {log} 1>&2
+            checkm2 predict \
+                --threads {threads} \
+                --input {input.mags} \
+                --extension .fa.gz \
+                --output-directory {params.out_dir} \
+                --database_path {input.db} \
+                --remove_intermediates \
+            2>> {log} 1>&2
 
-        mv {params.out_dir}/quality_report.tsv {output} 2>> {log} 1>&2
-        rm --recursive --verbose --force {params.out_dir} 2>> {log} 1>&2
+            mv {params.out_dir}/quality_report.tsv {output} 2>> {log} 1>&2
+            rm --recursive --verbose --force {params.out_dir} 2>> {log} 1>&2
+        else
+            mkdir -p {params.out_dir}
+            echo "[INFO] DREP dereplicated_genomes file '{input.mags}' is empty or missing. Skipping checkm2." >> {log}
+            touch {output}
+            exit 0
+        fi
         """
 
 

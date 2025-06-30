@@ -1,5 +1,5 @@
 include: "__functions__.smk"
-include: "camper.smk"
+#include: "camper.smk"
 include: "featurecounts.smk"
 include: "eggnog.smk"
 include: "prodigal.smk"
@@ -7,7 +7,7 @@ include: "prodigal.smk"
 rule contig_annotate:
     """Annotate on contig level"""
     input:
-        rules.contig_annotate__camper.input,
+        #rules.contig_annotate__camper.input,
         eggnog=[
             CONTIG_EGGNOG / f"{assembly_id}/eggnog_output.emapper.annotations"
             for assembly_id in ASSEMBLIES

@@ -17,14 +17,7 @@ rule quantify__samtools__stats_cram:
         mem_per_cpu=config["resources"]["mem_per_cpu"]["highmem"],
         time =  config["resources"]["time"]["longrun"],
     shell:
-        """
-        if [ ! -s {input.cram} ]; then
-            echo "[INFO] CRAM file '{input.cram}' is empty or missing. Skipping samtools stats." >> {log}
-            touch {output.txt}
-            exit 0
-        fi
-        samtools stats --reference {input.reference} {input.cram} > {output.txt} 2> {log}
-        """
+        "samtools stats --reference {input.reference} {input.cram} > {output.txt} 2> {log}"
 
 
 rule quantify__samtools:

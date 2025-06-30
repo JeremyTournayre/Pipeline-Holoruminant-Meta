@@ -17,6 +17,11 @@ rule annotate__quast:
         time =  config["resources"]["time"]["longrun"],
     shell:
         """
+        if [ ! -s {input} ]; then
+            mkdir -p {output}
+            echo "[INFO] DREP dereplicated_genomes file '{input}' is empty or missing. Skipping quast." >> {log}
+            exit 0
+        fi
         quast \
             --output-dir {output} \
             --threads {threads} \

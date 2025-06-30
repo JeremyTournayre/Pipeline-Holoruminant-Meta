@@ -26,7 +26,7 @@ rule quantify__coverm__genome_run:
         """
          if [ ! -s {input.cram} ]; then
             echo "[INFO] Input CRAM file '{input.cram}' is empty or missing. Skipping coverm step." >> {log}
-            touch {output.tsv}
+            touch > {output.tsv}
             exit 0
         fi
         ( samtools view \

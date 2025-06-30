@@ -20,12 +20,6 @@ rule annotate__eggnog:
         nvme = config["resources"]["nvme"]["verylarge"]
     shell:
         """
-        if [ ! -s {input.contigs} ]; then
-            echo "[INFO] DREP dereplicated_genomes file '{input.contigs}' is empty or missing. Skipping emapper." >> {log}
-            mkdir -p {params.out_dir}
-            touch  {params.out_dir}/{params.prefix}
-            exit 0
-        fi
         emapper.py -m diamond \
                    --data_dir {params.db} \
                    --itype metagenome \

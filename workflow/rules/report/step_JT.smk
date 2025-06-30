@@ -83,16 +83,12 @@ rule report__step__assemble:
         mem_mb=8 * 1024,
     shell:
         """
-        # Recherche de fichiers non vides mais sans ligne avec un message d'erreur connu
-        valid_files=$(grep -L "empty or missing" $(find {input} -type f -size +0 2>/dev/null) 2>/dev/null)
-
-        if [ -z "$valid_files" ]; then
-            echo "[INFO] Aucun fichier MultiQC valide trouvé dans '{input}'." >> {log}
+        if [ -z "$(find {input} -type f -size +0 2>/dev/null)" ]; then
+            echo "[INFO] Aucun fichier valide pour MultiQC dans '{input}'. Rapport ignoré." >> {log}
             mkdir -p {params.dir}
-            touch {output}
+            touch {output}  # ou tout autre fichier de sortie attendu
             exit 0
-        fi
-   
+        fi        
         multiqc \
             --title assemble \
             --force \
@@ -120,17 +116,7 @@ rule report__step__quantify:
     resources:
         mem_mb=8 * 1024,
     shell:
-        r"""
-        # Récupère les fichiers non vides sans ligne commençant par [INFO]
-        valid_files=$(find results/quantify/bowtie2 -type f -size +0 | xargs -r grep -L '^\[INFO\]' 2>/dev/null)
-
-        if [ -z "$valid_files" ]; then
-            echo "[INFO] Aucun fichier MultiQC valide trouvé dans 'results/quantify/bowtie2'." >> {log}
-            mkdir -p {params.dir}
-            touch {output}
-            exit 0
-        fi
-
+        """
         multiqc \
             --title quantify \
             --force \

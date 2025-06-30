@@ -57,13 +57,6 @@ rule quantify__bowtie2__map:
         rg_extra=compose_rg_extra,
     shell:
         """
-
-        if [ ! -s {input.mock} ]; then
-            echo "[INFO] input.mock is empty or missing. Skipping alignment." >> {log}
-            touch {output.cram}
-            exit 0
-        fi
-
         find \
             $(dirname {output.cram}) \
             -name "$(basename {output.cram}).tmp.*.bam" \
