@@ -26,7 +26,7 @@ rule annotate__phylophlan:
             echo Running Phylophlan on $(hostname) 2>> {log} 1>&2
 
             mkdir -p {output.dir}
-            if compgen -G "{input}/*.fa" > /dev/null; then
+            if compgen -G "{input}/*.fa*" > /dev/null; then
     
                 phylophlan_assign_sgbs -i {input} \
                                     -d SGB.Jun23 \

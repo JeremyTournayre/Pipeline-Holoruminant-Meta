@@ -21,7 +21,7 @@ rule annotate__checkm2__predict:
         nvme = config["resources"]["nvme"]["large"],
     shell:
         """
-        if compgen -G "{input.mags}/*.fa" > /dev/null; then
+        if compgen -G "{input.mags}/*.fa*" > /dev/null; then
             rm -rfv {params.out_dir} 2> {log} 1>&2
 
             checkm2 predict \

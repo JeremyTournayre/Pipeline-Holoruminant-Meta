@@ -4,7 +4,7 @@ rule _assemble__concoct:
             MEGAHIT / f"{wildcards.assembly_id}.fa.gz" if config["assembler"] == "megahit" else
             METASPADES / f"{wildcards.assembly_id}.fa.gz"
         ),
-        crams=get_crams_from_assembly_id,
+        bams=get_bams_from_assembly_id,
     output:
         directory(CONCOCT / "{assembly_id}"),
     log:
@@ -33,21 +33,10 @@ rule _assemble__concoct:
         > {params.workdir}/cut.fa \
         2>> {log}
 
-        for cram in {input.crams} ; do
-
-            bam={params.workdir}/$(basename $cram .cram).bam
-
-            samtools view \
-                --exclude-flags 4 \
-                --fast \
-                --output $bam \
-                --output-fmt BAM \
-                --reference {input.assembly} \
-                --threads {threads} \
-                $cram
-
-            samtools index $bam
-
+        for bam in {input.bams} ; do
+            dest_bam={params.workdir}/$(basename $bam)
+            ln -s $(realpath $bam) $dest_bam
+            samtools index $dest_bam
         done 2>> {log} 1>&2
 
         concoct_coverage_table.py \

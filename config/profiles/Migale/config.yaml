@@ -2,13 +2,29 @@ executor: cluster-generic
 # executor: local
 jobs: 5
 default-resources:
+    metaspades_slots : 0
+
+    cpu_per_task: 24
     time: 7200
-    # time: 700
-    mem_per_cpu: 10000
-    # mem_per_cpu: 4000
-    cpu_per_task: 1
+    mem_per_cpu: 16000
     partition: "'long.q'"
+
+
+    # cpu_per_task: 3
+    # time: 500
+    # mem_per_cpu: 1000
     # partition: "'short.q'"
+
+
+    # partition: "'long.q'"
+
+    # partition: "'highmem.q'"
+
+    # time: 80000
+    # mem_per_cpu: 16000
+    # partition: "'infinit.q'"
+
     project: "'project_2009831'"
     nvme: 0
-cluster-generic-submit-cmd: "qsub -cwd -l h_rt={resources.time} -l mem_free={resources.mem_per_cpu} -pe thread {resources.cpu_per_task} -q {resources.partition} -A {resources.project} -N job_{jobid}-{rule} -o jobs_log/job_{jobid}-{rule}.out -e jobs_log/job_{jobid}-{rule}.err"
+# cluster-generic-submit-cmd: "qsub -cwd -l h_rt={resources.time} -l mem_free={resources.mem_total} -pe thread {resources.cpu_per_task} -q {resources.partition} -A {resources.project} -N job_{jobid}-{rule} -o jobs_log/job_{jobid}-{rule}.out -e jobs_log/job_{jobid}-{rule}.err"
+cluster-generic-submit-cmd: "/work_projet/holoruminant/project_Pipeline-Holoruminant-Meta/submit.sh {resources.time} {resources.mem_per_cpu} {resources.cpu_per_task} -q {resources.partition} -A {resources.project} -N job_{jobid}-{rule} -o jobs_log/job_{jobid}-{rule}.out -e jobs_log/job_{jobid}-{rule}.err"

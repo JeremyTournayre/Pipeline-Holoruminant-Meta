@@ -24,6 +24,9 @@ rule annotate__proteinortho:
         done
         proteinortho {input.faa} \
             -cpus={threads} \
-            -project={output.project} \
+            -project=proteinortho \
             2>> {log} 1>&2
+
+        mv proteinortho* $(dirname {output.project})/
+
         """

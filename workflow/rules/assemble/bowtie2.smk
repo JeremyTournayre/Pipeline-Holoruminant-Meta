@@ -52,7 +52,7 @@ rule _assemble__bowtie2__map:
             METASPADES / f"{wildcards.assembly_id}.fa.gz.fai"
         ),
     output:
-        cram=ASSEMBLE_BOWTIE2 / "{assembly_id}.{sample_id}.{library_id}.cram",
+        bam=ASSEMBLE_BOWTIE2 / "{assembly_id}.{sample_id}.{library_id}.bam",
     log:
         log=ASSEMBLE_BOWTIE2 / "{assembly_id}.{sample_id}.{library_id}.log",
     conda:
@@ -72,8 +72,8 @@ rule _assemble__bowtie2__map:
     shell:
         """
         find \
-            $(dirname {output.cram}) \
-            -name "$(basename {output.cram}).tmp.*.bam" \
+            $(dirname {output.bam}) \
+            -name "$(basename {output.bam}).tmp.*.bam" \
             -delete \
         2> {log}.{resources.attempt} 1>&2
 
@@ -87,7 +87,8 @@ rule _assemble__bowtie2__map:
         | samtools sort \
             -l 9 \
             -m {params.samtools_mem} \
-            -o {output.cram} \
+            -O BAM \
+            -o {output.bam} \
             --reference {input.reference} \
             --threads {threads} \
         ) 2>> {log}.{resources.attempt} 1>&2
@@ -100,6 +101,6 @@ rule assemble__bowtie2:
     """Map all samples to all the assemblies that they belong to"""
     input:
         [
-            ASSEMBLE_BOWTIE2 / f"{assembly_id}.{sample_id}.{library_id}.cram"
+            ASSEMBLE_BOWTIE2 / f"{assembly_id}.{sample_id}.{library_id}.bam"
             for assembly_id, sample_id, library_id in ASSEMBLY_SAMPLE_LIBRARY
         ],

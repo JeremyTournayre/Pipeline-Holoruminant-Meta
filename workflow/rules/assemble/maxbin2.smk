@@ -5,7 +5,7 @@ rule _assemble__maxbin2__run:
             MEGAHIT / f"{wildcards.assembly_id}.fa.gz" if config["assembler"] == "megahit" else
             METASPADES / f"{wildcards.assembly_id}.fa.gz"
         ),
-        crams=get_crams_from_assembly_id,
+        bams=get_bams_from_assembly_id,
     output:
         workdir=directory(MAXBIN2 / "{assembly_id}"),
     log:
@@ -28,7 +28,7 @@ rule _assemble__maxbin2__run:
         """
         mkdir --parents {output.workdir}
 
-        ( samtools coverage {input.crams} \
+        ( samtools coverage {input.bams} \
         | awk '{{print $1"\\t"$5}}' \
         | grep -v '^#' \
         ) > {params.coverage} \

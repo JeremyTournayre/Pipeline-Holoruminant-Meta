@@ -58,7 +58,7 @@ rule quantify__bowtie2__map:
     shell:
         """
 
-        if [ ! -s {input.mock} ]; then
+        if grep -Fxq "No data found, skipping..." {input.mock}.log && [ "$(wc -l < {input.mock}.log)" -eq 1 ]; then
             echo "[INFO] input.mock is empty or missing. Skipping alignment." >> {log}
             touch {output.cram}
             exit 0

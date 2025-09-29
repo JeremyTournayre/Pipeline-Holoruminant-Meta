@@ -19,7 +19,7 @@ rule _assemble__metaspades:
         cpu_per_task=config["resources"]["cpu_per_task"]["multi_thread"],
         mem_per_cpu=config["resources"]["mem_per_cpu"]["veryhighmem"] // config["resources"]["cpu_per_task"]["multi_thread"],
         time=config["resources"]["time"]["verylongrun"],
-        partition=config["resources"]["partition"]["metaspades"],
+        partition=config["resources"]["partition"]["highlong"],
         attempt=get_attempt,
         metaspades_slots=1
     params:
@@ -41,7 +41,6 @@ rule _assemble__metaspades:
             -t {threads} \
             -k {params.kmer_size} \
             {params.additional_options} \
-            --memory 1300 \
             -1 {output.concatenated_forwards} \
             -2 {output.concatenated_reverses} \
             -o {params.out_dir} \

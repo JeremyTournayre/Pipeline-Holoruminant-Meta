@@ -26,7 +26,7 @@ rule annotate__gtdbtk__classify:
         attempt=get_attempt
     shell:
         """
-        if compgen -G "{input.fasta_folder}/*.fa" > /dev/null; then
+        if compgen -G "{input.fasta_folder}/*.fa*" > /dev/null; then
             rm \
                 --recursive \
                 --force \
