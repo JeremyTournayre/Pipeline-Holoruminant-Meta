@@ -39,7 +39,7 @@ rule contig_annotate__eggnog_find_homology:
     
 rule contig_annotate__eggnog_orthology_chunk:
     """
-    Annotate eggnog hits table per chunk (EGGNOG) using /dev/shm for speed,
+    Annotate eggnog hits table per chunk (EGGNOG) entirely in /dev/shm for speed,
     with usage counter to ensure DB is only deleted once all jobs are finished.
     """
     input:
@@ -51,17 +51,18 @@ rule contig_annotate__eggnog_orthology_chunk:
     params:
         fa = features["databases"]["eggnog"],
         out = lambda wc: f"prodigal.chunk.{wc.i}",
-        outdir = lambda wc: CONTIG_EGGNOG / f"{wc.assembly_id}/Chunks"
     threads: config["resources"]["cpu_per_task"]["multi_thread"]
     container:
         docker["annotate"]
     shell: """
         DATA_DIR="/dev/shm/eggnog_data_holorumin"
+        WORK_DIR="/dev/shm/eggnog_work_{wildcards.assembly_id}_{wildcards.i}"
         LOCK_FILE="$DATA_DIR/.lock"
         DONE_FILE="$DATA_DIR/.done"
         COUNTER_FILE="$DATA_DIR/.counter"
 
         mkdir -p $DATA_DIR
+        mkdir -p $WORK_DIR
 
         # === Increment counter safely ===
         (
@@ -89,16 +90,22 @@ rule contig_annotate__eggnog_orthology_chunk:
                 done
             fi
         fi
+        cp {input.seed} $WORK_DIR/
 
-        # === Run emapper ===
-        mkdir -p {params.outdir}
         emapper.py --data_dir $DATA_DIR \
-                   --annotate_hits_table {input.seed} \
-                   --no_file_comments \
-                   -o {params.out} \
-                   --output_dir {params.outdir} \
-                   --override \
-                   --cpu {threads} >> {log} 2>&1
+                --annotate_hits_table $WORK_DIR/$(basename {input.seed}) \
+                --no_file_comments \
+                -o {params.out} \
+                --output_dir $WORK_DIR \
+                --override \
+                --cpu {threads} >> {log} 2>&1
+
+        # === Move result back to disk ===
+        mkdir -p $(dirname {output})
+        mv $WORK_DIR/{params.out}.emapper.annotations {output}
+
+        # === Cleanup WORK_DIR ===
+        rm -rf $WORK_DIR
 
         # === Decrement counter and cleanup if last job ===
         (

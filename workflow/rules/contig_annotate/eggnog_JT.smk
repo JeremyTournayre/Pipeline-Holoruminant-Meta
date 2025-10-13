@@ -37,8 +37,11 @@ rule contig_annotate__eggnog_find_homology:
          emapper.py -m diamond --override --data_dir $DATA_DIR --no_annot --no_file_comments --cpu {threads} -i {input.files} --output_dir {params.folder} -o {params.out}  2>> {log} 1>&2;
     """
     
-
 rule contig_annotate__eggnog_orthology_chunk:
+    """
+    Annotate eggnog hits table per chunk (EGGNOG) using /dev/shm for speed,
+    with usage counter to ensure DB is only deleted once all jobs are finished.
+    """
     input:
         seed=CONTIG_EGGNOG / "{assembly_id}/Chunks/prodigal.chunk.{i}.emapper.seed_orthologs"
     output:
@@ -54,33 +57,40 @@ rule contig_annotate__eggnog_orthology_chunk:
         docker["annotate"]
     shell: """
         DATA_DIR="/dev/shm/eggnog_data_holorumin"
-        mkdir -p $DATA_DIR
-
-        # Lock mechanism pour copier la DB dans /dev/shm une seule fois
         LOCK_FILE="$DATA_DIR/.lock"
         DONE_FILE="$DATA_DIR/.done"
-        MAX_WAIT=1800  
-        WAIT_TIME=0
+        COUNTER_FILE="$DATA_DIR/.counter"
 
-        until [ -f "$DONE_FILE" ]; do
+        mkdir -p $DATA_DIR
+
+        # === Increment counter safely ===
+        (
+            flock -x 200
+            COUNT=0
+            if [ -f "$COUNTER_FILE" ]; then
+                COUNT=$(cat "$COUNTER_FILE")
+            fi
+            COUNT=$((COUNT + 1))
+            echo $COUNT > "$COUNTER_FILE"
+            echo "Incremented counter: $COUNT jobs using DB" >> {log}
+        ) 200>"$COUNTER_FILE.lock"
+
+        # === Copy DB if not already done ===
+        if [ ! -f "$DONE_FILE" ]; then
             if mkdir "$LOCK_FILE" 2>/dev/null; then
-                echo "This job has the lock, copying DB..." &>> {log}
-                cp -r {params.fa}/* $DATA_DIR/ &>> {log}
+                echo "This job has the lock, copying DB..." >> {log}
+                cp -r {params.fa}/* $DATA_DIR/ >> {log} 2>&1
                 touch "$DONE_FILE"
                 rmdir "$LOCK_FILE"
             else
-                echo "Another job is copying the DB, waiting..." &>> {log}
-                sleep 30
-                WAIT_TIME=$((WAIT_TIME + 30))
-                if [ $WAIT_TIME -ge $MAX_WAIT ]; then
-                    echo "Lock timeout reached, taking over the copy..." &>> {log}
-                    rm -rf "$DATA_DIR"/*
-                    rmdir "$LOCK_FILE" 2>/dev/null
-                    WAIT_TIME=0
-                fi
+                echo "Another job is copying the DB, waiting..." >> {log}
+                while [ ! -f "$DONE_FILE" ]; do
+                    sleep 30
+                done
             fi
-        done
+        fi
 
+        # === Run emapper ===
         mkdir -p {params.outdir}
         emapper.py --data_dir $DATA_DIR \
                    --annotate_hits_table {input.seed} \
@@ -88,8 +98,25 @@ rule contig_annotate__eggnog_orthology_chunk:
                    -o {params.out} \
                    --output_dir {params.outdir} \
                    --override \
-                   --cpu {threads} &>> {log}
+                   --cpu {threads} >> {log} 2>&1
+
+        # === Decrement counter and cleanup if last job ===
+        (
+            flock -x 200
+            COUNT=$(cat "$COUNTER_FILE")
+            COUNT=$((COUNT - 1))
+            if [ $COUNT -le 0 ]; then
+                echo 0 > "$COUNTER_FILE"
+                echo "No more jobs using DB, cleaning $DATA_DIR" >> {log}
+                rm -rf "$DATA_DIR"
+                rm -f "$DONE_FILE"
+            else
+                echo $COUNT > "$COUNTER_FILE"
+                echo "Remaining jobs using DB: $COUNT" >> {log}
+            fi
+        ) 200>"$COUNTER_FILE.lock"
     """
+
 
 rule contig_annotate__eggnog_merge_annotations:
     input:
