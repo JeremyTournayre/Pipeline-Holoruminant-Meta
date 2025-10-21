@@ -488,7 +488,18 @@ t.b.a
 
 
 ```{r}
-diamond_groups <- list.dirs(file.path(project_folder, "results", "preprocess", "diamond"), recursive = FALSE, full.names = FALSE)
+
+print("==== DEBUG: start diamond block ====")
+
+print("Working directory:")
+print(getwd())
+
+print("Listing diamond folder content:")
+print(list.files(file.path(project_folder, "results", "read_annotate", "diamond")))
+
+diamond_groups <- list.dirs(file.path(project_folder, "results", "read_annotate", "diamond"), recursive = FALSE, full.names = FALSE)
+print(diamond_groups)
+print(paste("diamond_groups length =", length(diamond_groups)))
 
 result_matrix_diamond <- matrix(nrow=nSamples, ncol=3*length(diamond_groups))
 colnames(result_matrix_diamond) <- 1:(3*length(diamond_groups))
@@ -501,7 +512,7 @@ for(diamond_run in 1:length(diamond_groups)){
  
   for(sample_run in 1:nSamples){
     
-    tmp <- readLines(file.path(file.path(project_folder, "results", "preprocess", "diamond",
+    tmp <- readLines(file.path(file.path(project_folder, "results", "read_annotate", "diamond",
                                          paste0(diamond_groups[diamond_run],"_", sample_sheet$sample_id[sample_run], "_", sample_sheet$library_id[sample_run], ".log" ))))
     
     total_aligned <- as.numeric(regmatches(tmp[grep("Reported", tmp)], regexpr("\\d+", tmp[grep("Reported", tmp)])))
@@ -539,7 +550,7 @@ sample_run <- 1
 
 for(sample_run in 1:nSamples){
     
-  tmp <- readLines(file.path(file.path(project_folder, "results", "preprocess", "humann", "log",
+  tmp <- readLines(file.path(file.path(project_folder, "results", "read_annotate", "humann", "log",
                                        paste0(sample_sheet$sample_id[sample_run], ".", sample_sheet$library_id[sample_run], ".log" ))))
     
     species_prescreen <- number_from_field(tmp, "from prescreen") 
@@ -575,7 +586,7 @@ for(sample_run in 1:nSamples){
 # Kraken2
 
 ```{r}
-kraken_groups <- list.dirs(file.path(project_folder, "results", "preprocess", "kraken2"), recursive = FALSE, full.names = FALSE)
+kraken_groups <- list.dirs(file.path(project_folder, "results", "read_annotate", "kraken2"), recursive = FALSE, full.names = FALSE)
 kraken_groups <- setdiff(kraken_groups, "benchmark")
 
 result_matrix_kraken <- matrix(nrow=nSamples, ncol=5*length(kraken_groups))
@@ -590,7 +601,7 @@ for(kraken_run in 1:length(kraken_groups)){
   
   for(sample_run in 1:nSamples){
     
-  tmp <- readLines(file.path(file.path(project_folder, "results", "preprocess", "kraken2", kraken_groups[kraken_run],
+  tmp <- readLines(file.path(file.path(project_folder, "results", "read_annotate", "kraken2", kraken_groups[kraken_run],
                                        paste0(sample_sheet$sample_id[sample_run], ".", sample_sheet$library_id[sample_run], ".log" ))))
     
     number_sequences <- number_from_field(tmp[2], "")
@@ -634,7 +645,7 @@ sample_run <- 1
 
 for(sample_run in 1:nSamples){
     
-  tmp <- readLines(file.path(file.path(project_folder, "results", "preprocess", "metaphlan", "profiled",
+  tmp <- readLines(file.path(file.path(project_folder, "results", "read_annotate", "metaphlan", "profiled",
                                        paste0(sample_sheet$sample_id[sample_run], ".", sample_sheet$library_id[sample_run], ".txt" ))))
     
     processed_reads <- number_from_field(tmp, "reads processed") 
@@ -662,7 +673,7 @@ for(sample_run in 1:nSamples){
 
 ```{r}
 
-result_matrix_nonpareil <- read.table(file.path(project_folder, "results", "preprocess", "nonpareil", "nonpareil.tsv"), sep="\t", header=TRUE)
+result_matrix_nonpareil <- read.table(file.path(project_folder, "results", "read_annotate", "nonpareil", "nonpareil.tsv"), sep="\t", header=TRUE)
 
   tmp <- result_matrix_nonpareil
 
@@ -680,7 +691,7 @@ result_matrix_nonpareil <- read.table(file.path(project_folder, "results", "prep
 result_matrix_phyloflash <- NULL
 
 for(sample_run in 1:nrow(sample_sheet)){
-  tar_file <- paste0("/scratch/project_2010176/metaG_groupAssembly/results/preprocess/phyloflash/",
+  tar_file <- paste0("/scratch/project_2010176/metaG_groupAssembly/results/read_annotate/phyloflash/",
                      sample_sheet$sample_id[sample_run],"_",
                      sample_sheet$library_id[sample_run],".phyloFlash.tar.gz")
   
@@ -729,7 +740,7 @@ sample_run <- 1
 
 for(sample_run in 1:nSamples){
     
-  tmp <- readLines(file.path(file.path(project_folder, "results", "preprocess", "singlem", "pipe",
+  tmp <- readLines(file.path(file.path(project_folder, "results", "read_annotate", "singlem", "pipe",
                                        paste0(sample_sheet$sample_id[sample_run], ".", sample_sheet$library_id[sample_run], ".log" ))))
   
   # First remove the unnecessary part of the log file

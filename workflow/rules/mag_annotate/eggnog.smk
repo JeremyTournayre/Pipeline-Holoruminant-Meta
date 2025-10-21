@@ -17,16 +17,20 @@ rule mag_annotate__eggnog:
         runtime=esc("runtime", "mag_annotate__eggnog"),
         mem_mb=esc("mem_mb", "mag_annotate__eggnog"),
         cpus_per_task=esc("cpus", "mag_annotate__eggnog"),
-        slurm_partition=esc("partition", "mag_annotate__eggnog"),
+        partition=esc("partition", "mag_annotate__eggnog"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'mag_annotate__eggnog')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("mag_annotate__eggnog"))
     shell:
         """
-         cp -r {params.db}/* $TMPDIR  2>> {log} 1>&2;
-        
+        if [ ! -s {input.contigs} ]; then
+            echo "[INFO] DREP dereplicated_genomes file '{input.contigs}' is empty or missing. Skipping emapper." >> {log}
+            mkdir -p {params.out_dir}
+            touch  {params.out_dir}/{params.prefix}
+            exit 0
+        fi        
         emapper.py -m diamond \
-                   --data_dir $TMPDIR \
+                   --data_dir {params.db} \
                    --itype metagenome \
                    --genepred prodigal \
                    --dbmem \

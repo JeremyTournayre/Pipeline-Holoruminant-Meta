@@ -15,19 +15,23 @@ rule report__preprocess:
     params:
        script=PREPROCESS_R,
        features=config["features-file"],
-       project=WD
+       project=WD,
+       pipeline_report=PIPELINE_REPORT
     threads: esc("cpus", "report__preprocess")
     resources:
         runtime=esc("runtime", "report__preprocess"),
         mem_mb=esc("mem_mb", "report__preprocess"),
         cpus_per_task=esc("cpus", "report__preprocess"),
-        slurm_partition=esc("partition", "report__preprocess"),
+        partition=esc("partition", "report__preprocess"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'report__preprocess')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("report__preprocess"))
     shell:"""
-       R -e "features_file <- '{params.features}'; \
+       cp {params.script} {params.pipeline_report}/report_preprocess_copy.Rmd
+       R -e "setwd('{params.project}'); \
+             working_dir <- '{params.project}'; \
+             features_file <- '{params.features}'; \
              project_folder <- '{params.project}' ; \
              snakemake <- TRUE ; \
-             rmarkdown::render('{params.script}',output_file=file.path('{params.project}','{output}'))" &> {log}
+             rmarkdown::render('{params.pipeline_report}/report_preprocess_copy.Rmd',output_file=file.path('{params.project}','{output}'))" &> {log}             
     """

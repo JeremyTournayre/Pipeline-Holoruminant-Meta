@@ -7,11 +7,11 @@ rule mag_annotate__dram_mag__annotate:
         #gtdbtk_summary=GTDBTK / "gtdbtk.summary.tsv",
         dram_db=features["databases"]["dram"],
     output:
-        annotation=DRAMMAG / "{assembly_id}" / "annotate"  / "{assembly_id}_annotations.tsv",
-        trnas=DRAMMAG / "{assembly_id}" / "annotate" / "{assembly_id}_trnas.tsv",
-        rrnas=DRAMMAG / "{assembly_id}" / "annotate" / "{assembly_id}_rrnas.tsv",
+        annotation=DRAMMAG / "{assembly_id}" / "annotate"  / "annotations.tsv",
+        trnas=DRAMMAG / "{assembly_id}" / "annotate" / "trnas.tsv",
+        rrnas=DRAMMAG / "{assembly_id}" / "annotate" / "rrnas.tsv",
     log:
-        DRAM / "{assembly_id}" / "annotate_{assembly_id}.log",
+        DRAMMAG / "{assembly_id}" / "annotate_{assembly_id}.log",
     container:
         docker["dram"]
     params:
@@ -24,7 +24,7 @@ rule mag_annotate__dram_mag__annotate:
         runtime=esc("runtime", "mag_annotate__dram_mag__annotate"),
         mem_mb=esc("mem_mb", "mag_annotate__dram_mag__annotate"),
         cpus_per_task=esc("cpus", "mag_annotate__dram_mag__annotate"),
-        slurm_partition=esc("partition", "mag_annotate__dram_mag__annotate"),
+        partition=esc("partition", "mag_annotate__dram_mag__annotate"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'mag_annotate__dram_mag__annotate')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("mag_annotate__dram_mag__annotate"))
@@ -46,7 +46,7 @@ rule mag_annotate__dram_mag__annotate:
     
 rule mag_annotate__fix_dram_mag_annotations_scaffold:
     input:
-        DRAMMAG / "{assembly_id}" / "annotate"  / "{assembly_id}_annotations.tsv",
+        DRAMMAG / "{assembly_id}" / "annotate"  / "annotations.tsv",
     output:
         DRAMMAG / "{assembly_id}" / "annotate"  / "{assembly_id}_annotations.fixed.tsv",
     log:
@@ -66,8 +66,8 @@ rule mag_annotate__dram_mag__distill:
     """Distill DRAM annotations."""
     input:
         annotation=DRAMMAG / "{assembly_id}" / "annotate"  / "{assembly_id}_annotations.fixed.tsv",
-        trnas=DRAMMAG / "{assembly_id}" / "annotate" / "{assembly_id}_trnas.tsv",
-        rrnas=DRAMMAG / "{assembly_id}" / "annotate" / "{assembly_id}_rrnas.tsv",
+        trnas=DRAMMAG / "{assembly_id}" / "annotate" / "trnas.tsv",
+        rrnas=DRAMMAG / "{assembly_id}" / "annotate" / "rrnas.tsv",
         dram_db=features["databases"]["dram"],
     output:
         genome=DRAMMAG / "{assembly_id}" / "genome_stats.tsv",
@@ -83,7 +83,7 @@ rule mag_annotate__dram_mag__distill:
         runtime=esc("runtime", "mag_annotate__fix_dram_mag_annotations_scaffold"),
         mem_mb=esc("mem_mb", "mag_annotate__fix_dram_mag_annotations_scaffold"),
         cpus_per_task=esc("cpus", "mag_annotate__fix_dram_mag_annotations_scaffold"),
-        slurm_partition=esc("partition", "mag_annotate__fix_dram_mag_annotations_scaffold"),
+        partition=esc("partition", "mag_annotate__fix_dram_mag_annotations_scaffold"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'mag_annotate__fix_dram_mag_annotations_scaffold')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("mag_annotate__fix_dram_mag_annotations_scaffold"))

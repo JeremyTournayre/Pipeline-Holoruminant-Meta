@@ -5,7 +5,7 @@ rule mag_annotate__phylophlan:
     input:
         DREP / "dereplicated_genomes",
     output:
-        directory(PHYLOPHLAN / "SGB"),
+        dir=directory(PHYLOPHLAN / "SGB"),
         result= PHYLOPHLAN / "SGB" / "SGB.tsv",
     log:
         PHYLOPHLAN / "phylophlan_sgb.log",
@@ -16,7 +16,7 @@ rule mag_annotate__phylophlan:
         runtime=esc("runtime", "mag_annotate__phylophlan"),
         mem_mb=esc("mem_mb", "mag_annotate__phylophlan"),
         cpus_per_task=esc("cpus", "mag_annotate__phylophlan"),
-        slurm_partition=esc("partition", "mag_annotate__phylophlan"),
+        partition=esc("partition", "mag_annotate__phylophlan"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'mag_annotate__phylophlan')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("mag_annotate__phylophlan"))
@@ -26,13 +26,13 @@ rule mag_annotate__phylophlan:
         """
             echo Running Phylophlan on $(hostname) 2>> {log} 1>&2
 
-            mkdir -p {output}
+            mkdir -p {output.dir}
 
             phylophlan_assign_sgbs -i {input} \
                                    -d SGB.Jun23 \
                                    --database_folder resources/databases/phylophlan/ \
                                    -e fa.gz \
-                                   -o {output} \
+                                   -o {output.dir} \
                                    --nproc {threads} \
                                    --verbose \
                                    --overwrite \

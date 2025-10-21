@@ -12,7 +12,7 @@ rule assemble__drep__separate_bins:
         runtime=esc("runtime", "assemble__drep__separate_bins"),
         mem_mb=esc("mem_mb", "assemble__drep__separate_bins"),
         cpus_per_task=esc("cpus", "assemble__drep__separate_bins"),
-        slurm_partition=esc("partition", "assemble__drep__separate_bins"),
+        partition=esc("partition", "assemble__drep__separate_bins"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'assemble__drep__separate_bins')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("assemble__drep__separate_bins"))
@@ -20,16 +20,20 @@ rule assemble__drep__separate_bins:
         """
         mkdir --parents {output.out_dir} 2> {log} 1>&2
 
-        ( gzip \
-            --decompress \
-            --stdout \
-            {input.assemblies} \
+        # Check if files exist and are not empty before processing
+        for assembly in {input.assemblies}; do
+            if [ -s "$assembly" ]; then
+                # Process the assembly if it's not empty
+                gzip --decompress --stdout "$assembly" \
         | paste - - \
         | tr -d ">" \
         | tr "@" "\t" \
-        | awk \
-            '{{print ">" $1 "@" $2 "\\n" $3 > "{output.out_dir}/" $1 ".fa" }}' \
-        ) >> {log} 2>&1
+                | awk '{{print ">" $1 "@" $2 "\\n" $3 > "{output.out_dir}/" $1 ".fa" }}' \
+                >> {log} 2>&1
+            else
+                echo "Warning: File $assembly is empty or missing, skipping." >> {log}
+            fi
+        done
         """
 
 
@@ -50,7 +54,7 @@ rule assemble__drep__run:
         runtime=esc("runtime", "assemble__drep__run"),
         mem_mb=esc("mem_mb", "assemble__drep__run"),
         cpus_per_task=esc("cpus", "assemble__drep__run"),
-        slurm_partition=esc("partition", "assemble__drep__run"),
+        partition=esc("partition", "assemble__drep__run"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'assemble__drep__run')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("assemble__drep__run"))
@@ -64,47 +68,55 @@ rule assemble__drep__run:
         extra=params["assemble"]["drep"]["extra"]
     shell:
         """
-        
-        rm \
-            --recursive \
-            --force \
-            {params.out_dir}/data_tables \
-            {params.out_dir}/data \
-            {params.out_dir}/dereplicated_genomes \
-            {params.out_dir}/figures \
-            {params.out_dir}/log \
-        2> {log}.{resources.attempt} 1>&2
+        if compgen -G "{input.genomes}/*.fa" > /dev/null; then
+            rm \
+                --recursive \
+                --force \
+                {params.out_dir}/data_tables \
+                {params.out_dir}/data \
+                {params.out_dir}/dereplicated_genomes \
+                {params.out_dir}/figures \
+                {params.out_dir}/log \
+            2> {log}.{resources.attempt} 1>&2
 
-        dRep dereplicate \
-            {params.out_dir} \
-            --processors {threads} \
-            --completeness {params.completeness} \
-            --contamination {params.contamination} \
-            --P_ani {params.P_ani} \
-            --S_ani {params.S_ani} \
-            -nc {params.nc} \
-            {params.extra} \
-            --genomes {input.genomes}/*.fa \
-        2>> {log}.{resources.attempt} 1>&2
+            echo "This is the current TMPDIR: " 2>> {log}.{resources.attempt} 1>&2
+            echo $TMPDIR 2>> {log}.{resources.attempt} 1>&2
+            
+            dRep dereplicate \
+                {params.out_dir} \
+                --processors {threads} \
+                --completeness {params.completeness} \
+                --contamination {params.contamination} \
+                --P_ani {params.P_ani} \
+                --S_ani {params.S_ani} \
+                -nc {params.nc} \
+                {params.extra} \
+                --genomes {input.genomes}/*.fa \
+            2>> {log}.{resources.attempt} 1>&2
 
-        for folder in data data_tables ; do
-            tar \
-                --create \
-                --directory {params.out_dir} \
-                --file {params.out_dir}/${{folder}}.tar.gz \
-                --remove-files \
-                --use-compress-program="pigz --processes {threads}" \
-                --verbose \
-                ${{folder}} \
-            2>> {log} 1>&2
-        done
+            for folder in data data_tables ; do
+                tar \
+                    --create \
+                    --directory {params.out_dir} \
+                    --file {params.out_dir}/${{folder}}.tar.gz \
+                    --remove-files \
+                    --use-compress-program="pigz --processes {threads}" \
+                    --verbose \
+                    ${{folder}} \
+                2>> {log} 1>&2
+            done
 
-        files=$(find {output.dereplicated_genomes} -type f ! -name "*.gz")
-        for file in $files; do
-            gzip "$file"
-        done
-
-        mv {log}.{resources.attempt} {log}
+            files=$(find {output.dereplicated_genomes} -type f ! -name "*.gz")
+            for file in $files; do
+                gzip "$file"
+            done
+            mv {log}.{resources.attempt} {log}
+        else
+            echo "No .fa files in {input.genomes}, skipping dRep" >> {log}
+            mkdir -p {output.dereplicated_genomes}
+            touch {output.data}
+            touch {output.data_tables}
+        fi
         """
 
 
@@ -123,7 +135,7 @@ rule assemble__drep__join_genomes:
         runtime=esc("runtime", "assemble__drep__join_genomes"),
         mem_mb=esc("mem_mb", "assemble__drep__join_genomes"),
         cpus_per_task=esc("cpus", "assemble__drep__join_genomes"),
-        slurm_partition=esc("partition", "assemble__drep__join_genomes"),
+        partition=esc("partition", "assemble__drep__join_genomes"),
         gres=lambda wc, attempt: f"{get_resources(wc, attempt, 'assemble__drep__join_genomes')['nvme']}",
         attempt=get_attempt,
     retries: len(get_escalation_order("assemble__drep__join_genomes"))
